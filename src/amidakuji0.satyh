@@ -1,0 +1,124 @@
+@stage: 0
+@require: list
+@require: base/parser
+
+type amida-drawn =
+  | HorizontalLine of int * int
+  | CrossingLines  of int * int
+  | PositiveLine   of int * int
+  | NegativeLine   of int * int
+  | DoubleLine     of int * int
+
+
+let lift-amida-drawn drawn =
+  match drawn with
+  | HorizontalLine(i, j) -> &(HorizontalLine(~(lift-int i), ~(lift-int j)))
+  | CrossingLines(i, j)  -> &(CrossingLines(~(lift-int i), ~(lift-int j)))
+  | PositiveLine(i, j)   -> &(PositiveLine(~(lift-int i), ~(lift-int j)))
+  | NegativeLine(i, j)   -> &(NegativeLine(~(lift-int i), ~(lift-int j)))
+  | DoubleLine(i, j)     -> &(DoubleLine(~(lift-int i), ~(lift-int j)))
+
+
+let lift-list liftf xs =
+  let codeacc =
+    xs |> List.fold-left (fun codeacc x ->
+      &(~(liftf x) :: ~codeacc)
+    ) &[]
+  in
+  &(List.reverse ~(codeacc))
+
+
+module Amidakuji0 : sig
+  val parse : string -> amida-drawn list * int * int
+  val display-drawn : amida-drawn -> unit
+end = struct
+
+  let display-drawn drawn =
+    let f s i j =
+      display-message (s ^ `(` ^ (arabic i) ^ `, `# ^ (arabic j) ^ `)`)
+    in
+    match drawn with
+    | HorizontalLine(i, j) -> f `H` i j
+    | CrossingLines(i, j)  -> f `C` i j
+    | _                    -> f `O` 0 0
+
+  type amida-element =
+    | Horizon
+    | Empty
+    | Crossing
+    | Positive
+    | Negative
+    | Double
+
+  let charLF = Char.of-codepoint 0x0A
+  let charCR = Char.of-codepoint 0x0D
+
+  let break-parser =
+    open Parser in
+    open StringParser in
+        (char charCR >> char charLF >> pure ())
+    <|> (char charLF >> pure ())
+
+  let space-parser =
+    open Parser in
+    open StringParser in
+    string #` `#
+
+  let element-parser =
+    open Parser in
+    open StringParser in
+        (string `-|` >> pure Horizon)
+    <|> (string #` |` >> pure Empty)
+    <|> (string `X|` >> pure Crossing)
+    <|> (string `/|` >> pure Positive)
+    <|> (string `\|` >> pure Negative)
+    <|> (string `=|` >> pure Double)
+
+  let line-parser =
+    open Parser in
+    open StringParser in
+    between (string `|`) (break-parser >> many space-parser)
+      (many element-parser) >>= (fun line -> pure [line])
+
+  let blank-parser =
+    open Parser in
+    open StringParser in
+    (many space-parser) >> break-parser >> many space-parser >> pure []
+
+  let main-parser =
+    open Parser in
+    open StringParser in
+    some (line-parser <|> blank-parser) >>= (fun liness -> (
+      pure (List.concat liness)
+    ))
+
+  let int-max m n =
+    if m >= n then m else n
+
+  let error =
+    abort-with-message
+
+  let parse s =
+    match StringParser.run main-parser (s ^ Char.to-string charLF) with
+    | Err(_) ->
+        error `syntax error (1)`
+
+    | Ok(lines) ->
+        let (accfinal, inum) =
+          lines |> List.fold-lefti (fun j (acc, inum) line -> (
+            let accnew =
+              line |> List.fold-lefti (fun i acc elem -> (
+                match elem with
+                | Empty    -> acc
+                | Horizon  -> (HorizontalLine(i, j)) :: acc
+                | Crossing -> (CrossingLines(i, j)) :: acc
+                | Positive -> (PositiveLine(i, j)) :: acc
+                | Negative -> (NegativeLine(i, j)) :: acc
+                | Double   -> (DoubleLine(i, j)) :: acc
+              )) acc
+            in
+            (accnew, int-max inum (List.length line))
+          )) ([], 0)
+        in
+        (List.reverse accfinal, inum, List.length lines)
+end
