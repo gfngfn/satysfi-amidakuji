@@ -1,7 +1,7 @@
 opam-version: "2.0"
 name: "satysfi-amidakuji"
-version: "1.0.0"
-synopsis: "A Great SATySFi Package"
+version: "0.0.1"
+synopsis: "A SATySFi package for drawing amidakujis"
 description: """
 Brilliant description comes here.
 """
