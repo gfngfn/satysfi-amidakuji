@@ -39,8 +39,7 @@ end
 
 
 let-inline \amidakuji@ ~poss =
-  ~(let (ipos, s) = poss in
-    let (drawns-0, inum-0, jnum-0) = Amidakuji0.parse s in
+  ~(let (drawns-0, inum-0, jnum-0) = Amidakuji0.parse poss in
     let () = display-message `DEBUG` in
     let () = drawns-0 |> List.iter Amidakuji0.display-drawn in  % for debug
     &(let inum = ~(lift-int inum-0) in

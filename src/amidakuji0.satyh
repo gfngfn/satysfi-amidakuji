@@ -29,7 +29,7 @@ let lift-list liftf xs =
 
 
 module Amidakuji0 : sig
-  val parse : string -> amida-drawn list * int * int
+  val parse : input-position * string -> amida-drawn list * int * int
   val display-drawn : amida-drawn -> unit
 end = struct
 
@@ -67,17 +67,19 @@ end = struct
   let element-parser =
     open Parser in
     open StringParser in
+    label `expected an element (-|, ␣|, X|, /|, \|, or =|)` (
         (string `-|` >> pure Horizon)
     <|> (string #` |` >> pure Empty)
     <|> (string `X|` >> pure Crossing)
     <|> (string `/|` >> pure Positive)
     <|> (string `\|` >> pure Negative)
     <|> (string `=|` >> pure Double)
+    )
 
   let line-parser =
     open Parser in
     open StringParser in
-    between (string `|`) (break-parser >> many space-parser)
+    between (label `expected |` (string `|`)) (break-parser >> many space-parser)
       (many element-parser) >>= (fun line -> pure [line])
 
   let blank-parser =
@@ -95,13 +97,42 @@ end = struct
   let int-max m n =
     if m >= n then m else n
 
-  let error =
-    abort-with-message
+  let error-prefix = `syntax error of 'amidakuji'`
 
-  let parse s =
-    match StringParser.run main-parser (s ^ Char.to-string charLF) with
-    | Err(_) ->
-        error `syntax error (1)`
+  let report-unusual-error ipos msg =
+    let (fname, ln, col) = get-input-position ipos in
+    abort-with-message
+      (error-prefix ^
+        #` in the string that begins at line `# ^ arabic ln ^ `, column `# ^ arabic col ^
+        #` in '` ^ fname ^ `': `# ^ msg)
+
+  let report-error ipos err =
+    let desc = err#desc in
+    match err#token with
+    | None ->
+        report-unusual-error ipos desc
+
+    | Some(token) ->
+        let pos = Token.position token in
+        let (fname, _, _) = get-input-position ipos in
+        let ln = pos#line in
+        let col = pos#column in
+        abort-with-message
+          (error-prefix ^ #` at line `# ^ arabic ln ^ `, column `# ^ arabic col ^
+          #` in '` ^ fname ^ `': `# ^ desc)
+
+  let token-position-of-input-position ipos =
+    let (_, ln, col) = get-input-position ipos in
+    (| line = ln; column = col |)
+
+  let parse (ipos, s) =
+    let token-pos = token-position-of-input-position ipos in
+    match StringParser.run-with-init-position main-parser token-pos (s ^ Char.to-string charLF) with
+    | Err(errs) ->
+        ( match errs with
+          | []       -> report-unusual-error ipos `something is wrong`
+          | err :: _ -> report-error ipos err
+        )
 
     | Ok(lines) ->
         let (accfinal, inum) =
