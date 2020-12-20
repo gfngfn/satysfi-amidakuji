@@ -1,33 +1,40 @@
 @require: stdjareport
-@require: itemize
-@require: annot
+@require: code
 
-@require: base/typeset/base
-@require: base/float
-
-@require: amidakuji/amidakuji
-
-% Document-local function definition
-let-inline \show-float f =
-  f
-  |> Float.to-string
-  |> embed-string
-in
+@import: ../src/amidakuji
 
 document (|
-  title = {amidakuji Manual};
-  author = {Your Name};
+  title  = {`amidakuji` パッケージ};
+  author = {Takashi Suwa};
 |) '<
-  +p {
-    See `https://qiita.com/na4zagin3/items/b392f5d522f9bcc0493b` for the instruction in Japanese.
-  }
-  +chapter{Examples} <
-    +p {
-      ${\pi = \mathrm-token!(Float.to-string Amidakuji.pi)}.
+  +chapter{概要}<
+    +p{
+      `amidakuji` はいわゆる阿弥陀籤を描画するためのマクロ `\amidakuji@` を提供するパッケージです．
+      マクロなので，引数の文字列中に構文エラーがあっても組版処理に移る前に迅速にエラーが報告されます．
     }
-    +p {
-      Geometric mean of 1, 3, and 5 is
-      \show-float(Amidakuji.geo-mean [1.; 3.; 5.]);
+  >
+  +chapter{用例}<
+    +code(```
+      \amidakuji@~(@`
+        | | | | | |
+        |X|-|=|/| |
+        | |-|\|-|X|
+        |=|X|-|\|=|
+        |-|\|-|=|-|
+        |X|=|-|\| |
+        | | | | | |
+      `);
+    ```);
+    +p{
+      \amidakuji@~(@`
+        | | | | | |
+        |X|-|=|/| |
+        | |-|\|-|X|
+        |=|X|-|\|=|
+        |-|\|-|=|-|
+        |X|=|-|\| |
+        | | | | | |
+      `);
     }
   >
 >
