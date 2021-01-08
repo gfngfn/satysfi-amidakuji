@@ -40,8 +40,6 @@ end
 
 let-inline \amidakuji@ ~poss =
   ~(let (drawns-0, inum-0, jnum-0) = Amidakuji0.parse poss in
-    let () = display-message `DEBUG` in
-    let () = drawns-0 |> List.iter Amidakuji0.display-drawn in  % for debug
     &(let inum = ~(lift-int inum-0) in
       let jnum = ~(lift-int jnum-0) in
       let drawns = ~(lift-list lift-amida-drawn drawns-0) in
@@ -56,7 +54,6 @@ let-inline \amidakuji@ ~poss =
                   let x = AmidakujiConst.make-x origin i in
                   let y = AmidakujiConst.make-y height origin j in
                   let ym = y -' AmidakujiConst.height-unit *' 0.5 in
-                  let () = display-message `HorizontalLine` in
                   [
                     AmidakujiConst.line
                       (Gr.line
@@ -70,7 +67,6 @@ let-inline \amidakuji@ ~poss =
                   let y = AmidakujiConst.make-y height origin j in
                   let yH = y -' AmidakujiConst.height-unit *' 0.15 in
                   let yL = y -' AmidakujiConst.height-unit *' 0.85 in
-                  let () = display-message `CrossingLines` in
                   [
                     AmidakujiConst.line (Gr.line (xL, yH) (xR, yL));
                     AmidakujiConst.line (Gr.line (xL, yL) (xR, yH));

@@ -30,7 +30,7 @@ let lift-list liftf xs =
 
 module Amidakuji0 : sig
   val parse : input-position * string -> amida-drawn list * int * int
-  val display-drawn : amida-drawn -> unit
+%  val display-drawn : amida-drawn -> unit
 end = struct
 
   let display-drawn drawn =
